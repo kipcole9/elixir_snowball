@@ -8,10 +8,16 @@ defmodule Snowball.GeneratorTest do
   # Helpers
   # -----------------------------------------------------------------------
 
-  defp gen!(source, module_name \\ Snowball.Stemmers.GenTest, language \\ :test) do
+  defp gen!(source, module_name \\ unique_test_module(), language \\ :test) do
     {:ok, tokens} = Lexer.tokenize(source)
     {:ok, prog} = Analyser.analyse(tokens)
     Generator.generate(prog, module_name, language)
+  end
+
+  # Mint a fresh module name per call so repeated `Code.compile_string/1`
+  # invocations across tests don't trigger "redefining module" warnings.
+  defp unique_test_module do
+    Module.concat([Snowball.Stemmers, "GenTest#{System.unique_integer([:positive])}"])
   end
 
   # Compile a generated source string into a live module and return the module.

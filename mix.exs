@@ -50,7 +50,7 @@ defmodule Snowball.MixProject do
     [
       maintainers: ["Kip Cole"],
       licenses: ["Apache-2.0"],
-      links: %{"GitHub" => @source_url},
+      links: links(),
       files: [
         "lib",
         "mix.exs",
@@ -59,6 +59,14 @@ defmodule Snowball.MixProject do
         "LICENSE.md"
       ]
     ]
+  end
+
+  def links do
+    %{
+      "GitHub" => @source_url,
+      "Readme" => "#{@source_url}/blob/v#{@version}/README.md",
+      "Changelog" => "#{@source_url}/blob/v#{@version}/CHANGELOG.md"
+    }
   end
 
   defp docs do

@@ -48,7 +48,7 @@ You can also generate a specific algorithm by name:
 mix snowball.gen english french
 ```
 
-The generated modules depend only on `Snowball.Runtime` for their runtime, so adding `:snowball` to your deps is sufficient.
+The generated modules depend only on `Snowball.Runtime` for their runtime, so adding `:snowball` to your deps is sufficient.  See [text_stemmer](https://hex.com/packages/text_stemmer) for the canonical implementation of snowball-based stemmers.
 
 ## Documentation
 
@@ -56,4 +56,4 @@ Full API documentation is published at [https://hexdocs.pm/snowball](https://hex
 
 ## License
 
-Apache-2.0. See [LICENSE.md](https://github.com/kipcole9/snowball/blob/v0.1.0/LICENSE.md).
+Apache-2.0. See [LICENSE.md](https://github.com/kipcole9/elixir_snowball/blob/v0.1.0/LICENSE.md).
