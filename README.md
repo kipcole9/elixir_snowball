@@ -10,7 +10,7 @@ This package does **not** bundle pre-compiled stemmers. For the canonical Snowba
 
 * `Snowball.Lexer`, `Snowball.Preprocessor`, `Snowball.Analyser`, `Snowball.Generator` — the four stages of the compiler pipeline.
 
-* `Snowball.Stemmer` — the runtime helpers (string buffer state, character class membership, `find_among` dispatch tables, etc.) that every generated stemmer module calls into.
+* `Snowball.Runtime` — the runtime helpers (string buffer state, character class membership, `find_among` dispatch tables, etc.) that every generated stemmer module calls into.
 
 * `mix snowball.gen` — Mix task that walks a directory of `.sbl` sources, runs each through the pipeline, and writes generated `.ex` files to disk.
 
@@ -48,7 +48,7 @@ You can also generate a specific algorithm by name:
 mix snowball.gen english french
 ```
 
-The generated modules depend only on `Snowball.Stemmer` for their runtime, so adding `:snowball` to your deps is sufficient.
+The generated modules depend only on `Snowball.Runtime` for their runtime, so adding `:snowball` to your deps is sufficient.
 
 ## Documentation
 

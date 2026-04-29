@@ -13,7 +13,7 @@ defmodule Snowball do
   * the `mix snowball.gen` Mix task that drives the pipeline over a
     directory of `.sbl` files, and
 
-  * the `Snowball.Stemmer` runtime support module that generated stemmer
+  * the `Snowball.Runtime` runtime support module that generated stemmer
     modules call into at run time (string buffer manipulation, character
     classes, `find_among` dispatch tables, and so on).
 

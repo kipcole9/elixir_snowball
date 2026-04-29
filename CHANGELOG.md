@@ -8,4 +8,4 @@ All notable changes to this project will be documented in this file. The format 
 
 Initial release of `:snowball` as a standalone package, extracted from the original `:snowball` Hex package (which now ships only the pre-compiled stemmers as `:text_stemmer`).
 
-This package provides the Snowball language compiler pipeline (`Snowball.Lexer`, `Snowball.Preprocessor`, `Snowball.Analyser`, `Snowball.Generator`), the `Snowball.Stemmer` runtime support module that generated stemmers call into, and the `mix snowball.gen` Mix task. See the [README](README.md) for usage.
+This package provides the Snowball language compiler pipeline (`Snowball.Lexer`, `Snowball.Preprocessor`, `Snowball.Analyser`, `Snowball.Generator`), the `Snowball.Runtime` runtime support module that generated stemmers call into, and the `mix snowball.gen` Mix task. See the [README](README.md) for usage.

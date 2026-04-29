@@ -65,6 +65,7 @@ defmodule Snowball.MixProject do
     [
       main: "Snowball",
       source_ref: "v#{@version}",
+      formatters: ["html", "markdown"],
       extras: [
         "README.md",
         "CHANGELOG.md"

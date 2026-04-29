@@ -5,7 +5,7 @@ defmodule Snowball.Grouping do
   A grouping in canonical Snowball is a set of codepoints. Generated
   code emits these as compact bit-tables for O(1) membership testing.
   This module produces the `{min_codepoint, bits, max_codepoint}`
-  tuple consumed by `Snowball.Stemmer.in_grouping/2` and friends.
+  tuple consumed by `Snowball.Runtime.in_grouping/2` and friends.
 
   Generated stemmer modules call `from_string/1` or `from_codepoints/1`
   inside a module attribute so the table is computed at compile time.

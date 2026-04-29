@@ -359,7 +359,7 @@ defmodule Snowball.Generator do
       "  Generated from the canonical Snowball algorithm source.\n" <>
       "  \"\"\"\n" <>
       "\n" <>
-      "  alias Snowball.Stemmer\n" <>
+      "  alias Snowball.Runtime\n" <>
       grouping_alias <>
       "\n"
   end
@@ -393,7 +393,7 @@ defmodule Snowball.Generator do
 
   defp emit_among_tables(ctx) do
     # Skip among tables whose scan map has been generated — those amongs are
-    # accessed via `Stemmer.scan_and_replace_forward/2` and the `@a_N`
+    # accessed via `Runtime.scan_and_replace_forward/2` and the `@a_N`
     # attribute would never be referenced, producing an unused-attribute warning.
     scan_keys = MapSet.new(ctx.scan_maps, fn {{node, mode}, _} -> {node, mode} end)
 
@@ -740,9 +740,9 @@ defmodule Snowball.Generator do
       "  \"\"\"\n" <>
       "  @spec stem(binary()) :: binary()\n" <>
       "  def stem(word) when is_binary(word) do\n" <>
-      "    state = Stemmer.new(word) |> init_vars()\n" <>
+      "    state = Runtime.new(word) |> init_vars()\n" <>
       "    state = run_stem(state)\n" <>
-      "    Stemmer.assign_to(state)\n" <>
+      "    Runtime.assign_to(state)\n" <>
       "  end\n\n"
   end
 
@@ -795,7 +795,7 @@ defmodule Snowball.Generator do
         calls <> "\n    state"
       end
 
-    "  defp run_stem(%Stemmer{} = state) do\n" <>
+    "  defp run_stem(%Runtime{} = state) do\n" <>
       body <> "\n" <>
       "  end\n\n"
   end
@@ -864,17 +864,17 @@ defmodule Snowball.Generator do
           "  end\n\n")
       |> maybe_emit(used?.("lift"),
           "  defp lift(state, :fail), do: {:fail, state}\n" <>
-          "  defp lift(_state, %Stemmer{} = s), do: {:ok, s}\n\n")
+          "  defp lift(_state, %Runtime{} = s), do: {:ok, s}\n\n")
       |> maybe_emit(String.contains?(body_code, "next_codepoint("),
-          "  defp next_codepoint(%Stemmer{cursor: c, limit: lim, current: cur} = state) do\n" <>
-          "    case Stemmer.codepoint_at(cur, c, lim) do\n" <>
+          "  defp next_codepoint(%Runtime{cursor: c, limit: lim, current: cur} = state) do\n" <>
+          "    case Runtime.codepoint_at(cur, c, lim) do\n" <>
           "      {_cp, size} -> {:ok, %{state | cursor: c + size}}\n" <>
           "      :error -> {:fail, state}\n" <>
           "    end\n" <>
           "  end\n\n")
       |> maybe_emit(String.contains?(body_code, "next_codepoint_b("),
-          "  defp next_codepoint_b(%Stemmer{cursor: c, limit_backward: lb, current: cur} = state) do\n" <>
-          "    case Stemmer.codepoint_before(cur, c, lb) do\n" <>
+          "  defp next_codepoint_b(%Runtime{cursor: c, limit_backward: lb, current: cur} = state) do\n" <>
+          "    case Runtime.codepoint_before(cur, c, lb) do\n" <>
           "      {_cp, size} -> {:ok, %{state | cursor: c - size}}\n" <>
           "      :error -> {:fail, state}\n" <>
           "    end\n" <>
@@ -914,7 +914,7 @@ defmodule Snowball.Generator do
   defp emit_routine(name, body, mode, ctx) do
     body_code = compile_command(body, mode, ctx, "    ")
 
-    "  defp r_#{name}(%Stemmer{} = state) do\n" <>
+    "  defp r_#{name}(%Runtime{} = state) do\n" <>
       body_code <> "\n" <>
       "  end\n\n"
   end
@@ -1030,35 +1030,35 @@ defmodule Snowball.Generator do
 
       %{kind: :goto_grouping, grouping: g} ->
         sfx = mode_suffix(mode)
-        i <> "lift(state, Stemmer.go_out_grouping#{sfx}(state, @g_#{g}))"
+        i <> "lift(state, Runtime.go_out_grouping#{sfx}(state, @g_#{g}))"
 
       %{kind: :gopast_grouping, grouping: g} ->
         sfx = mode_suffix(mode)
         adv = advance_fn(mode)
-        i <> "case Stemmer.go_out_grouping#{sfx}(state, @g_#{g}) do\n" <>
+        i <> "case Runtime.go_out_grouping#{sfx}(state, @g_#{g}) do\n" <>
           i <> "  :fail -> {:fail, state}\n" <>
-          i <> "  %Stemmer{} = s -> #{adv}(s)\n" <>
+          i <> "  %Runtime{} = s -> #{adv}(s)\n" <>
           i <> "end"
 
       %{kind: :goto_non, grouping: g} ->
         sfx = mode_suffix(mode)
-        i <> "lift(state, Stemmer.go_in_grouping#{sfx}(state, @g_#{g}))"
+        i <> "lift(state, Runtime.go_in_grouping#{sfx}(state, @g_#{g}))"
 
       %{kind: :gopast_non, grouping: g} ->
         sfx = mode_suffix(mode)
         adv = advance_fn(mode)
-        i <> "case Stemmer.go_in_grouping#{sfx}(state, @g_#{g}) do\n" <>
+        i <> "case Runtime.go_in_grouping#{sfx}(state, @g_#{g}) do\n" <>
           i <> "  :fail -> {:fail, state}\n" <>
-          i <> "  %Stemmer{} = s -> #{adv}(s)\n" <>
+          i <> "  %Runtime{} = s -> #{adv}(s)\n" <>
           i <> "end"
 
       %{kind: :in_grouping, grouping: g} ->
         sfx = mode_suffix(mode)
-        i <> "lift(state, Stemmer.in_grouping#{sfx}(state, @g_#{g}))"
+        i <> "lift(state, Runtime.in_grouping#{sfx}(state, @g_#{g}))"
 
       %{kind: :out_grouping, grouping: g} ->
         sfx = mode_suffix(mode)
-        i <> "lift(state, Stemmer.out_grouping#{sfx}(state, @g_#{g}))"
+        i <> "lift(state, Runtime.out_grouping#{sfx}(state, @g_#{g}))"
 
       %{kind: :leftslice} ->
         # Forward: [ marks bra (lower, left end).
@@ -1073,13 +1073,13 @@ defmodule Snowball.Generator do
         i <> "{:ok, %{state | #{field}: state.cursor}}"
 
       %{kind: :slicefrom, arg: {:literal, s}} ->
-        i <> "{:ok, Stemmer.slice_from(state, #{inspect(s)})}"
+        i <> "{:ok, Runtime.slice_from(state, #{inspect(s)})}"
 
       %{kind: :slicefrom, arg: {:var, v}} ->
-        i <> "{:ok, Stemmer.slice_from(state, state.vars[#{var_atom(v)}])}"
+        i <> "{:ok, Runtime.slice_from(state, state.vars[#{var_atom(v)}])}"
 
       %{kind: :delete} ->
-        i <> "{:ok, Stemmer.slice_del(state)}"
+        i <> "{:ok, Runtime.slice_del(state)}"
 
       %{kind: :attach, arg: {:literal, s}} ->
         # `attach S` (also written `<+ S`) inserts S at the current cursor
@@ -1089,7 +1089,7 @@ defmodule Snowball.Generator do
         # backward operations (e.g. palatalise_e in Czech).
         i <> "(fn ->\n" <>
           i <> "  saved_c = state.cursor\n" <>
-          i <> "  new_state = Stemmer.insert(state, saved_c, saved_c, #{inspect(s)})\n" <>
+          i <> "  new_state = Runtime.insert(state, saved_c, saved_c, #{inspect(s)})\n" <>
           i <> "  {:ok, %{new_state | cursor: saved_c + byte_size(#{inspect(s)})}}\n" <>
           i <> "end).()"
 
@@ -1098,7 +1098,7 @@ defmodule Snowball.Generator do
         # cursor after insertion — this is canonical Snowball behaviour.
         i <> "(fn ->\n" <>
           i <> "  saved_c = state.cursor\n" <>
-          i <> "  {:ok, %{Stemmer.insert(state, state.cursor, state.cursor, #{inspect(s)}) | cursor: saved_c}}\n" <>
+          i <> "  {:ok, %{Runtime.insert(state, state.cursor, state.cursor, #{inspect(s)}) | cursor: saved_c}}\n" <>
           i <> "end).()"
 
       %{kind: :insert, arg: {:var, v}} ->
@@ -1106,7 +1106,7 @@ defmodule Snowball.Generator do
         # restores cursor — same semantics as the literal form.
         i <> "(fn ->\n" <>
           i <> "  saved_c = state.cursor\n" <>
-          i <> "  {:ok, %{Stemmer.insert(state, state.cursor, state.cursor, state.vars[#{var_atom(v)}]) | cursor: saved_c}}\n" <>
+          i <> "  {:ok, %{Runtime.insert(state, state.cursor, state.cursor, state.vars[#{var_atom(v)}]) | cursor: saved_c}}\n" <>
           i <> "end).()"
 
       %{kind: :attach, arg: {:var, v}} ->
@@ -1115,12 +1115,12 @@ defmodule Snowball.Generator do
         i <> "(fn ->\n" <>
           i <> "  saved_c = state.cursor\n" <>
           i <> "  val = state.vars[#{var_atom(v)}]\n" <>
-          i <> "  new_state = Stemmer.insert(state, saved_c, saved_c, val)\n" <>
+          i <> "  new_state = Runtime.insert(state, saved_c, saved_c, val)\n" <>
           i <> "  {:ok, %{new_state | cursor: saved_c + byte_size(val)}}\n" <>
           i <> "end).()"
 
       %{kind: :sliceto, var: v} ->
-        i <> "{:ok, put_in(state.vars[#{var_atom(v)}], Stemmer.slice_to(state))}"
+        i <> "{:ok, put_in(state.vars[#{var_atom(v)}], Runtime.slice_to(state))}"
 
       %{kind: :next} ->
         adv = advance_fn(mode)
@@ -1187,12 +1187,12 @@ defmodule Snowball.Generator do
       %{kind: :eq_s} ->
         sfx = mode_suffix(mode)
         s = node.string
-        i <> "lift(state, Stemmer.eq_s#{sfx}(state, #{inspect(s)}))"
+        i <> "lift(state, Runtime.eq_s#{sfx}(state, #{inspect(s)}))"
 
       %{kind: :eq_s_var} ->
         sfx = mode_suffix(mode)
         var = node.var
-        i <> "lift(state, Stemmer.eq_s#{sfx}(state, state.vars[#{var_atom(var)}]))"
+        i <> "lift(state, Runtime.eq_s#{sfx}(state, state.vars[#{var_atom(var)}]))"
 
       %{kind: :substring} ->
         # Bare `substring` (without enclosing `[` / `]`) is a compile-time
@@ -1329,7 +1329,7 @@ defmodule Snowball.Generator do
        ) do
     case find_scan_idx(among_node, :forward, ctx) do
       nil -> compile_repeat_loop(body, :forward, ctx, i)
-      idx -> i <> "{:ok, Stemmer.scan_and_replace_forward(state, @scan_#{idx})}"
+      idx -> i <> "{:ok, Runtime.scan_and_replace_forward(state, @scan_#{idx})}"
     end
   end
 
@@ -1347,7 +1347,7 @@ defmodule Snowball.Generator do
        ) do
     case find_scan_idx(among_node, :forward, ctx) do
       nil -> compile_repeat_loop(body, :forward, ctx, i)
-      idx -> i <> "{:ok, Stemmer.scan_and_replace_forward(state, @scan_#{idx})}"
+      idx -> i <> "{:ok, Runtime.scan_and_replace_forward(state, @scan_#{idx})}"
     end
   end
 
@@ -1564,9 +1564,9 @@ defmodule Snowball.Generator do
       # No slice actions in this among — just advance the cursor without
       # touching bra/ket so that any explicit [ ] markers are preserved.
       i <> "(fn ->\n" <>
-        i <> "  case Stemmer.find_among#{sfx}(state, #{tref}) do\n" <>
+        i <> "  case Runtime.find_among#{sfx}(state, #{tref}) do\n" <>
         i <> "    :fail -> {:fail, state}\n" <>
-        i <> "    {%Stemmer{} = s, _} -> {:ok, s}\n" <>
+        i <> "    {%Runtime{} = s, _} -> {:ok, s}\n" <>
         i <> "  end\n" <>
         i <> "end).()"
     else
@@ -1611,9 +1611,9 @@ defmodule Snowball.Generator do
         end
 
       i <> "(fn ->\n" <>
-        i <> "  case Stemmer.find_among#{sfx}(state, #{tref}) do\n" <>
+        i <> "  case Runtime.find_among#{sfx}(state, #{tref}) do\n" <>
         i <> "    :fail -> {:fail, state}\n" <>
-        i <> "    {%Stemmer{} = s, result} ->\n" <>
+        i <> "    {%Runtime{} = s, result} ->\n" <>
         i <> "      state = s\n" <>
         inner <> "\n" <>
         i <> "  end\n" <>
@@ -1660,9 +1660,9 @@ defmodule Snowball.Generator do
 
     i <> "(fn ->\n" <>
       i <> "  state = %{state | #{ket_field}: state.cursor}\n" <>
-      i <> "  case Stemmer.find_among#{sfx}(state, #{tref}) do\n" <>
+      i <> "  case Runtime.find_among#{sfx}(state, #{tref}) do\n" <>
       i <> "    :fail -> {:fail, state}\n" <>
-      i <> "    {%Stemmer{} = s, #{result_var}} ->\n" <>
+      i <> "    {%Runtime{} = s, #{result_var}} ->\n" <>
       i <> "      state = %{s | #{bra_field}: s.cursor}\n" <>
       inner_body <> "\n" <>
       i <> "  end\n" <>
@@ -1727,9 +1727,9 @@ defmodule Snowball.Generator do
     inner_body = wrap_restrictions(restrictions, action_body, mode, ctx, i)
 
     i <> "(fn ->\n" <>
-      i <> "  case Stemmer.find_among#{sfx}(state, #{tref}) do\n" <>
+      i <> "  case Runtime.find_among#{sfx}(state, #{tref}) do\n" <>
       i <> "    :fail -> {:fail, state}\n" <>
-      i <> "    {%Stemmer{} = s, #{result_var}} ->\n" <>
+      i <> "    {%Runtime{} = s, #{result_var}} ->\n" <>
       i <> "      state = s\n" <>
       inner_body <> "\n" <>
       i <> "  end\n" <>
@@ -1781,9 +1781,9 @@ defmodule Snowball.Generator do
 
     i <> "(fn ->\n" <>
       i <> "  state = %{state | #{ket_field}: state.cursor}\n" <>
-      i <> "  case Stemmer.find_among#{sfx}(state, #{tref}) do\n" <>
+      i <> "  case Runtime.find_among#{sfx}(state, #{tref}) do\n" <>
       i <> "    :fail -> {:fail, state}\n" <>
-      i <> "    {%Stemmer{} = s, #{result_var}} ->\n" <>
+      i <> "    {%Runtime{} = s, #{result_var}} ->\n" <>
       i <> "      state = %{s | #{bra_field}: s.cursor}\n" <>
       i <> "      after_find_rel = state.limit - state.cursor\n" <>
       i <> "      case (fn state ->\n" <>
@@ -1850,9 +1850,9 @@ defmodule Snowball.Generator do
       i <> "    {:fail, _} -> {:fail, state}\n" <>
       i <> "    {:ok, limit_state} ->\n" <>
       i <> "      state = %{state | #{ket_field}: state.cursor, #{limit_field}: limit_state.cursor}\n" <>
-      i <> "      case Stemmer.find_among#{sfx}(state, #{tref}) do\n" <>
+      i <> "      case Runtime.find_among#{sfx}(state, #{tref}) do\n" <>
       i <> "        :fail -> {:fail, %{state | #{limit_field}: old_limit}}\n" <>
-      i <> "        {%Stemmer{} = s, #{result_var}} ->\n" <>
+      i <> "        {%Runtime{} = s, #{result_var}} ->\n" <>
       i <> "          state = %{s | #{bra_field}: s.cursor, #{limit_field}: old_limit}\n" <>
       inner_body <> "\n" <>
       i <> "      end\n" <>
@@ -1878,9 +1878,9 @@ defmodule Snowball.Generator do
       i <> "(fn ->\n" <>
         i <> "  rel = state.limit - state.cursor\n" <>
         i <> "  state = %{state | ket: state.cursor}\n" <>
-        i <> "  case Stemmer.find_among#{sfx}(state, #{tref}) do\n" <>
+        i <> "  case Runtime.find_among#{sfx}(state, #{tref}) do\n" <>
         i <> "    :fail -> {:fail, %{state | cursor: state.limit - rel}}\n" <>
-        i <> "    {%Stemmer{} = s, _} -> {:ok, %{s | cursor: s.limit - rel}}\n" <>
+        i <> "    {%Runtime{} = s, _} -> {:ok, %{s | cursor: s.limit - rel}}\n" <>
         i <> "  end\n" <>
         i <> "end).()"
     else
@@ -1889,9 +1889,9 @@ defmodule Snowball.Generator do
       i <> "(fn ->\n" <>
         i <> "  rel = state.limit - state.cursor\n" <>
         i <> "  state = %{state | ket: state.cursor}\n" <>
-        i <> "  case Stemmer.find_among#{sfx}(state, #{tref}) do\n" <>
+        i <> "  case Runtime.find_among#{sfx}(state, #{tref}) do\n" <>
         i <> "    :fail -> {:fail, %{state | cursor: state.limit - rel}}\n" <>
-        i <> "    {%Stemmer{} = s, result} ->\n" <>
+        i <> "    {%Runtime{} = s, result} ->\n" <>
         i <> "      state = %{s | cursor: s.limit - rel}\n" <>
         i <> "      case result do\n" <>
         cases <> "\n" <>
@@ -1984,7 +1984,7 @@ defmodule Snowball.Generator do
       %{kind: :cursor_ref} -> "state.cursor"
       %{kind: :limit_ref} -> "state.limit"
       %{kind: :size_ref} -> "byte_size(state.current)"
-      %{kind: :len_ref} -> "Stemmer.codepoint_length(state.current)"
+      %{kind: :len_ref} -> "Runtime.codepoint_length(state.current)"
       %{kind: :maxint_ref} -> "9_007_199_254_740_991"
       %{kind: :minint_ref} -> "-9_007_199_254_740_991"
       %{kind: :var_ref, var: v} -> "state.vars[#{var_atom(v)}]"
@@ -1996,7 +1996,7 @@ defmodule Snowball.Generator do
       %{kind: :sizeof, arg: {:literal, s}} -> to_string(byte_size(s))
       %{kind: :sizeof, arg: {:var, v}} -> "byte_size(state.#{v})"
       %{kind: :lenof, arg: {:literal, s}} -> to_string(length(String.codepoints(s)))
-      %{kind: :lenof, arg: {:var, v}} -> "Stemmer.codepoint_length(state.#{v})"
+      %{kind: :lenof, arg: {:var, v}} -> "Runtime.codepoint_length(state.#{v})"
       _ -> "0 # TODO: unknown AE #{node[:kind]}"
     end
   end

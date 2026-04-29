@@ -1,4 +1,4 @@
-defmodule Snowball.Stemmer do
+defmodule Snowball.Runtime do
   @moduledoc """
   Runtime state and primitive operations for Snowball stemmers.
 
@@ -11,12 +11,12 @@ defmodule Snowball.Stemmer do
   ## State model
 
   Snowball is conceptually mutable — every command moves the cursor or
-  rewrites the buffer. In Elixir we thread an immutable `%Stemmer{}`
+  rewrites the buffer. In Elixir we thread an immutable `%Runtime{}`
   through every primitive. Each primitive returns either the updated
   struct (success) or the atom `:fail` (failure). Generated code uses
   pattern matches like:
 
-      case Stemmer.eq_s(state, "ing") do
+      case Runtime.eq_s(state, "ing") do
         :fail -> :fail
         state -> state
       end
@@ -92,8 +92,8 @@ defmodule Snowball.Stemmer do
 
   ### Examples
 
-      iex> Snowball.Stemmer.new("running")
-      %Snowball.Stemmer{current: "running", cursor: 0, limit: 7, limit_backward: 0, bra: 0, ket: 7, vars: %{}}
+      iex> Snowball.Runtime.new("running")
+      %Snowball.Runtime{current: "running", cursor: 0, limit: 7, limit_backward: 0, bra: 0, ket: 7, vars: %{}}
 
   """
   @spec new(binary()) :: t()
@@ -126,7 +126,7 @@ defmodule Snowball.Stemmer do
 
   ### Examples
 
-      iex> "hello" |> Snowball.Stemmer.new() |> Snowball.Stemmer.assign_to()
+      iex> "hello" |> Snowball.Runtime.new() |> Snowball.Runtime.assign_to()
       "hello"
 
   """
@@ -149,9 +149,9 @@ defmodule Snowball.Stemmer do
 
   ### Examples
 
-      iex> state = Snowball.Stemmer.new("abcdef")
+      iex> state = Snowball.Runtime.new("abcdef")
       iex> state = %{state | bra: 1, ket: 4}
-      iex> Snowball.Stemmer.slice_to(state)
+      iex> Snowball.Runtime.slice_to(state)
       "bcd"
 
   """
@@ -189,9 +189,9 @@ defmodule Snowball.Stemmer do
 
   ### Examples
 
-      iex> state = Snowball.Stemmer.new("running")
-      iex> %Snowball.Stemmer{cursor: 3} = Snowball.Stemmer.eq_s(state, "run")
-      iex> Snowball.Stemmer.eq_s(state, "xyz")
+      iex> state = Snowball.Runtime.new("running")
+      iex> %Snowball.Runtime{cursor: 3} = Snowball.Runtime.eq_s(state, "run")
+      iex> Snowball.Runtime.eq_s(state, "xyz")
       :fail
 
   """
@@ -236,10 +236,10 @@ defmodule Snowball.Stemmer do
 
   ### Examples
 
-      iex> state = Snowball.Stemmer.new("running")
+      iex> state = Snowball.Runtime.new("running")
       iex> state = %{state | cursor: 7}
-      iex> %Snowball.Stemmer{cursor: 4} = Snowball.Stemmer.eq_s_b(state, "ing")
-      iex> Snowball.Stemmer.eq_s_b(state, "xyz")
+      iex> %Snowball.Runtime{cursor: 4} = Snowball.Runtime.eq_s_b(state, "ing")
+      iex> Snowball.Runtime.eq_s_b(state, "xyz")
       :fail
 
   """
@@ -304,9 +304,9 @@ defmodule Snowball.Stemmer do
 
       iex> # Grouping {97, <<0b00000101>>, 100} = {a,c} (bits 0,2 set: 97,99)
       iex> grouping = {97, <<0b00000101>>, 100}
-      iex> state = Snowball.Stemmer.new("abc")
-      iex> %Snowball.Stemmer{cursor: 1} = Snowball.Stemmer.in_grouping(state, grouping)
-      iex> Snowball.Stemmer.in_grouping(%{state | cursor: 1}, grouping)
+      iex> state = Snowball.Runtime.new("abc")
+      iex> %Snowball.Runtime{cursor: 1} = Snowball.Runtime.in_grouping(state, grouping)
+      iex> Snowball.Runtime.in_grouping(%{state | cursor: 1}, grouping)
       :fail
 
   """
@@ -348,8 +348,8 @@ defmodule Snowball.Stemmer do
   ### Examples
 
       iex> grouping = {97, <<0b00010101>>, 101}
-      iex> state = Snowball.Stemmer.new("bace")
-      iex> %Snowball.Stemmer{cursor: 1} = Snowball.Stemmer.out_grouping(state, grouping)
+      iex> state = Snowball.Runtime.new("bace")
+      iex> %Snowball.Runtime{cursor: 1} = Snowball.Runtime.out_grouping(state, grouping)
 
   """
   @spec out_grouping(t(), {integer(), binary(), integer()}) :: result()
@@ -390,12 +390,12 @@ defmodule Snowball.Stemmer do
   ### Examples
 
       iex> g = Snowball.Grouping.from_string("aeiou")
-      iex> state = Snowball.Stemmer.new("running")
+      iex> state = Snowball.Runtime.new("running")
       iex> state = %{state | cursor: 2, limit_backward: 0}
-      iex> match?(%Snowball.Stemmer{cursor: 1}, Snowball.Stemmer.in_grouping_b(state, g))
+      iex> match?(%Snowball.Runtime{cursor: 1}, Snowball.Runtime.in_grouping_b(state, g))
       true
       iex> state2 = %{state | cursor: 7}
-      iex> Snowball.Stemmer.in_grouping_b(state2, g)
+      iex> Snowball.Runtime.in_grouping_b(state2, g)
       :fail
 
   """
@@ -440,12 +440,12 @@ defmodule Snowball.Stemmer do
   ### Examples
 
       iex> g = Snowball.Grouping.from_string("aeiou")
-      iex> state = Snowball.Stemmer.new("running")
+      iex> state = Snowball.Runtime.new("running")
       iex> state = %{state | cursor: 7, limit_backward: 0}
-      iex> match?(%Snowball.Stemmer{cursor: 6}, Snowball.Stemmer.out_grouping_b(state, g))
+      iex> match?(%Snowball.Runtime{cursor: 6}, Snowball.Runtime.out_grouping_b(state, g))
       true
       iex> state2 = %{state | cursor: 2}
-      iex> Snowball.Stemmer.out_grouping_b(state2, g)
+      iex> Snowball.Runtime.out_grouping_b(state2, g)
       :fail
 
   """
@@ -492,8 +492,8 @@ defmodule Snowball.Stemmer do
   ### Examples
 
       iex> g = Snowball.Grouping.from_string("aeiou")
-      iex> state = Snowball.Stemmer.new("aeibc")
-      iex> match?(%Snowball.Stemmer{cursor: 3}, Snowball.Stemmer.go_in_grouping(state, g))
+      iex> state = Snowball.Runtime.new("aeibc")
+      iex> match?(%Snowball.Runtime{cursor: 3}, Snowball.Runtime.go_in_grouping(state, g))
       true
 
   """
@@ -543,8 +543,8 @@ defmodule Snowball.Stemmer do
   ### Examples
 
       iex> g = Snowball.Grouping.from_string("aeiou")
-      iex> state = Snowball.Stemmer.new("bce")
-      iex> match?(%Snowball.Stemmer{cursor: 2}, Snowball.Stemmer.go_out_grouping(state, g))
+      iex> state = Snowball.Runtime.new("bce")
+      iex> match?(%Snowball.Runtime{cursor: 2}, Snowball.Runtime.go_out_grouping(state, g))
       true
 
   """
@@ -591,9 +591,9 @@ defmodule Snowball.Stemmer do
   ### Examples
 
       iex> g = Snowball.Grouping.from_string("aeiou")
-      iex> state = Snowball.Stemmer.new("bcaei")
+      iex> state = Snowball.Runtime.new("bcaei")
       iex> state = %{state | cursor: 5, limit_backward: 0}
-      iex> match?(%Snowball.Stemmer{cursor: 2}, Snowball.Stemmer.go_in_grouping_b(state, g))
+      iex> match?(%Snowball.Runtime{cursor: 2}, Snowball.Runtime.go_in_grouping_b(state, g))
       true
 
   """
@@ -643,9 +643,9 @@ defmodule Snowball.Stemmer do
   ### Examples
 
       iex> g = Snowball.Grouping.from_string("aeiou")
-      iex> state = Snowball.Stemmer.new("aeibc")
+      iex> state = Snowball.Runtime.new("aeibc")
       iex> state = %{state | cursor: 5, limit_backward: 0}
-      iex> match?(%Snowball.Stemmer{cursor: 3}, Snowball.Stemmer.go_out_grouping_b(state, g))
+      iex> match?(%Snowball.Runtime{cursor: 3}, Snowball.Runtime.go_out_grouping_b(state, g))
       true
 
   """
@@ -810,9 +810,9 @@ defmodule Snowball.Stemmer do
 
   ### Examples
 
-      iex> state = Snowball.Stemmer.new("abcdef")
-      iex> {%Snowball.Stemmer{current: "abXYZdef", limit: 8}, 2} =
-      ...>   Snowball.Stemmer.replace_s(state, 2, 3, "XYZ")
+      iex> state = Snowball.Runtime.new("abcdef")
+      iex> {%Snowball.Runtime{current: "abXYZdef", limit: 8}, 2} =
+      ...>   Snowball.Runtime.replace_s(state, 2, 3, "XYZ")
 
   """
   @spec replace_s(t(), non_neg_integer(), non_neg_integer(), binary()) :: {t(), integer()}
@@ -859,9 +859,9 @@ defmodule Snowball.Stemmer do
 
   ### Examples
 
-      iex> state = Snowball.Stemmer.new("running")
+      iex> state = Snowball.Runtime.new("running")
       iex> state = %{state | bra: 4, ket: 7}
-      iex> %Snowball.Stemmer{current: "runneed"} = Snowball.Stemmer.slice_from(state, "eed")
+      iex> %Snowball.Runtime{current: "runneed"} = Snowball.Runtime.slice_from(state, "eed")
 
   """
   @spec slice_from(t(), binary()) :: t()
@@ -887,9 +887,9 @@ defmodule Snowball.Stemmer do
 
   ### Examples
 
-      iex> state = Snowball.Stemmer.new("running")
+      iex> state = Snowball.Runtime.new("running")
       iex> state = %{state | bra: 3, ket: 7}
-      iex> %Snowball.Stemmer{current: "run", limit: 3} = Snowball.Stemmer.slice_del(state)
+      iex> %Snowball.Runtime{current: "run", limit: 3} = Snowball.Runtime.slice_del(state)
 
   """
   @spec slice_del(t()) :: t()
@@ -914,10 +914,10 @@ defmodule Snowball.Stemmer do
 
   ### Examples
 
-      iex> Snowball.Stemmer.codepoint_length("hello")
+      iex> Snowball.Runtime.codepoint_length("hello")
       5
 
-      iex> Snowball.Stemmer.codepoint_length("ஞ்சா")
+      iex> Snowball.Runtime.codepoint_length("ஞ்சா")
       4
 
   """
@@ -963,8 +963,8 @@ defmodule Snowball.Stemmer do
 
   ### Examples
 
-      iex> state = Snowball.Stemmer.new("abcdef")
-      iex> %Snowball.Stemmer{current: "abXYZdef"} = Snowball.Stemmer.insert(state, 2, 3, "XYZ")
+      iex> state = Snowball.Runtime.new("abcdef")
+      iex> %Snowball.Runtime{current: "abXYZdef"} = Snowball.Runtime.insert(state, 2, 3, "XYZ")
 
   """
   @spec insert(t(), non_neg_integer(), non_neg_integer(), binary()) :: t()
@@ -1037,9 +1037,9 @@ defmodule Snowball.Stemmer do
   ### Examples
 
       iex> entries = [{"ing", -1, 1, nil}, {"ly", -1, 2, nil}]
-      iex> state = Snowball.Stemmer.new("running")
+      iex> state = Snowball.Runtime.new("running")
       iex> state = %{state | cursor: 4}
-      iex> {%Snowball.Stemmer{cursor: 7}, 1} = Snowball.Stemmer.find_among(state, entries)
+      iex> {%Snowball.Runtime{cursor: 7}, 1} = Snowball.Runtime.find_among(state, entries)
 
   """
   @spec find_among(t(), [among_entry()]) :: {t(), integer()} | fail()
@@ -1181,9 +1181,9 @@ defmodule Snowball.Stemmer do
   ### Examples
 
       iex> entries = [{"ing", -1, 1, nil}, {"run", -1, 2, nil}]
-      iex> state = Snowball.Stemmer.new("running")
+      iex> state = Snowball.Runtime.new("running")
       iex> state = %{state | cursor: 7, limit_backward: 0}
-      iex> {%Snowball.Stemmer{cursor: 4}, 1} = Snowball.Stemmer.find_among_b(state, entries)
+      iex> {%Snowball.Runtime{cursor: 4}, 1} = Snowball.Runtime.find_among_b(state, entries)
 
   """
   @spec find_among_b(t(), [among_entry()]) :: {t(), integer()} | fail()

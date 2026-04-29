@@ -1,7 +1,7 @@
 defmodule Snowball.GroupingTest do
   use ExUnit.Case, async: true
 
-  alias Snowball.Stemmer
+  alias Snowball.Runtime
 
   # Vowels grouping {a,e,i,o,u} = codepoints 97,101,105,111,117
   # min=97 max=117, bits over 21 codepoints (3 bytes):
@@ -14,67 +14,67 @@ defmodule Snowball.GroupingTest do
 
   describe "in_grouping/2" do
     test "matches and advances on vowel" do
-      state = Stemmer.new("apple")
-      assert %Stemmer{cursor: 1} = Stemmer.in_grouping(state, @vowels)
+      state = Runtime.new("apple")
+      assert %Runtime{cursor: 1} = Runtime.in_grouping(state, @vowels)
     end
 
     test "fails on non-vowel" do
-      state = %{Stemmer.new("apple") | cursor: 1}
-      assert :fail = Stemmer.in_grouping(state, @vowels)
+      state = %{Runtime.new("apple") | cursor: 1}
+      assert :fail = Runtime.in_grouping(state, @vowels)
     end
 
     test "fails at limit" do
-      state = %{Stemmer.new("a") | cursor: 1}
-      assert :fail = Stemmer.in_grouping(state, @vowels)
+      state = %{Runtime.new("a") | cursor: 1}
+      assert :fail = Runtime.in_grouping(state, @vowels)
     end
   end
 
   describe "out_grouping/2" do
     test "matches and advances on consonant" do
-      state = %{Stemmer.new("apple") | cursor: 1}
-      assert %Stemmer{cursor: 2} = Stemmer.out_grouping(state, @vowels)
+      state = %{Runtime.new("apple") | cursor: 1}
+      assert %Runtime{cursor: 2} = Runtime.out_grouping(state, @vowels)
     end
 
     test "fails on vowel" do
-      state = Stemmer.new("apple")
-      assert :fail = Stemmer.out_grouping(state, @vowels)
+      state = Runtime.new("apple")
+      assert :fail = Runtime.out_grouping(state, @vowels)
     end
   end
 
   describe "in_grouping_b/2" do
     test "matches the codepoint before the cursor" do
-      state = %{Stemmer.new("apple") | cursor: 5}
-      assert %Stemmer{cursor: 4} = Stemmer.in_grouping_b(state, @vowels)
+      state = %{Runtime.new("apple") | cursor: 5}
+      assert %Runtime{cursor: 4} = Runtime.in_grouping_b(state, @vowels)
     end
 
     test "fails when char before cursor is not in grouping" do
-      state = %{Stemmer.new("apple") | cursor: 4}
-      assert :fail = Stemmer.in_grouping_b(state, @vowels)
+      state = %{Runtime.new("apple") | cursor: 4}
+      assert :fail = Runtime.in_grouping_b(state, @vowels)
     end
   end
 
   describe "go_in_grouping/2" do
     test "scans forward through grouping members and stops at non-member" do
-      state = Stemmer.new("aeiou_xyz")
-      assert %Stemmer{cursor: 5} = Stemmer.go_in_grouping(state, @vowels)
+      state = Runtime.new("aeiou_xyz")
+      assert %Runtime{cursor: 5} = Runtime.go_in_grouping(state, @vowels)
     end
 
     test "fails when entire remainder is in the grouping" do
-      state = Stemmer.new("aeiou")
-      assert :fail = Stemmer.go_in_grouping(state, @vowels)
+      state = Runtime.new("aeiou")
+      assert :fail = Runtime.go_in_grouping(state, @vowels)
     end
   end
 
   describe "go_out_grouping/2" do
     test "scans forward through non-members until grouping member" do
-      state = Stemmer.new("xyzabc_e")
+      state = Runtime.new("xyzabc_e")
       # First vowel is 'a' at offset 3
-      assert %Stemmer{cursor: 3} = Stemmer.go_out_grouping(state, @vowels)
+      assert %Runtime{cursor: 3} = Runtime.go_out_grouping(state, @vowels)
     end
 
     test "fails when no grouping member found before limit" do
-      state = Stemmer.new("xyz")
-      assert :fail = Stemmer.go_out_grouping(state, @vowels)
+      state = Runtime.new("xyz")
+      assert :fail = Runtime.go_out_grouping(state, @vowels)
     end
   end
 
@@ -87,15 +87,15 @@ defmodule Snowball.GroupingTest do
     @umlauts {228, <<0x01, 0x00, 0x04, 0x01>>, 252}
 
     test "in_grouping with multibyte codepoint advances by codepoint byte size" do
-      state = Stemmer.new("ä-test")
+      state = Runtime.new("ä-test")
       # 'ä' is 2 bytes in UTF-8
-      assert %Stemmer{cursor: 2} = Stemmer.in_grouping(state, @umlauts)
+      assert %Runtime{cursor: 2} = Runtime.in_grouping(state, @umlauts)
     end
 
     test "in_grouping_b retreats by codepoint byte size" do
-      state = %{Stemmer.new("xü") | cursor: 3}
+      state = %{Runtime.new("xü") | cursor: 3}
       # 'ü' is 2 bytes in UTF-8
-      assert %Stemmer{cursor: 1} = Stemmer.in_grouping_b(state, @umlauts)
+      assert %Runtime{cursor: 1} = Runtime.in_grouping_b(state, @umlauts)
     end
   end
 end
