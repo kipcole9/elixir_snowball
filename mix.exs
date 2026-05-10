@@ -1,8 +1,8 @@
 defmodule Snowball.MixProject do
   use Mix.Project
 
-  @version "0.1.0"
-  @source_url "https://github.com/kipcole9/snowball"
+  @version "0.1.1"
+  @source_url "https://github.com/kipcole9/elixir_snowball"
 
   def project do
     [
